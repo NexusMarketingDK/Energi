@@ -1,12 +1,30 @@
-            - name: gh-npm
-  # You may pin to the exact commit or the version.
-  # uses: cvyl/gh-npm@cc526c83f42ad592ab0f9b93ecd491286ca08703
-  uses: cvyl/gh-npm@0.0.6,1
-  with:
-    # Node.js version
-    node_version: 
-    # NPM scope
-    npm_scope: 
-    # GitHub scope
-    github_scope: 
-          
+const express = require('express');
+const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+
+const app = express();
+const PORT = 3000;
+
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
+app.post('/get-energy-data', async (req, res) => {
+    const { address } = req.body;
+    try {
+        const response = await fetch(`https://api.energidata.dk/api/endpoint?address=${encodeURIComponent(address)}`);
+        const data = await response.json();
+
+        // Assuming the API returns an object with 'annual_consumption' and 'price_per_kwh'
+        const consumption = data.annual_consumption;
+        const price = data.price_per_kwh;
+
+        res.json({ consumption, price });
+    } catch (error) {
+        console.error('Error fetching energy data:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+});
